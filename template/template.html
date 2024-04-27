@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Mental Arithmetic</title>
+<style>
+body {
+    /* Colors from: www.nordtheme.com */
+    color: #d8dee9;
+    background-color: #2e3440;
+}
+
+input, button {
+    min-height:3vmin;
+    min-width:3vmin;
+    font-size:3vmin;
+    padding: 5px 5px;
+    margin: 5px 5px;
+    background-color : #d1d1d1; 
+}
+
+::selection {
+    color: #4c566a;
+    background: #8fbcbb;
+}
+
+.config details > summary {
+    position: fixed;
+    top: 0;
+    left: 0;
+    list-style-type: '⚙';
+    font-size: 5vmin;
+}
+
+.content {
+    font-size:3vmin;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+</style>
+</head>
+<body>
+    <div class="config">
+    <details>
+        <summary></summary>
+        <form  id="form" name="form" action="/" method="get" autocomplete="off">
+            <div class="content">
+                <div>
+                    <input type="checkbox" name="addition" value="True" {%addition%}>
+                    <label for="addition">Addition</label>
+                    <br />
+                    <input type="checkbox" name="subtraction" value="True" {%subtraction%}>
+                    <label for="subtraction">Subtraction</label>
+                    <br />
+                    <input type="checkbox" name="multiplication" value="True" {%multiplication%}>
+                    <label for="multiplication">Multiplication</label>
+                    <br />
+                    <input type="checkbox" name="division" value="True" {%division%}>
+                    <label for="division">Division</label>
+                    <br />
+                    <br />
+                    <label for="variableNum">Number of Variables</label>
+                    <br />
+                    <input type="number" name="variableNum" id="variableNum" value="{%variableNum%}" min="2" max="30" />
+                    <br />
+                    <label for="variableMinValue">Variable Min Value</label>
+                    <br />
+                    <input type="number" name="variableMinValue" id="variableMinValue" value="{%variableMinValue%}" min="-10000" max="10000"/>
+                    <br />
+                    <label for="variableMaxValue">Variable Max Value</label>
+                    <br />
+                    <input type="number" name="variableMaxValue" id="variableMaxValue" value="{%variableMaxValue%}" min="-10000" max="10000" />
+                    <br />
+                    <label for="variableDecimalPoints">Variable Decimal Points</label>
+                    <br />
+                    <input type="number" name="variableDecimalPoints" id="variableDecimalPoints" value="{%variableDecimalPoints%}" min="0" max="5"/>
+                    <br />
+                    <label for="resultDecimalPoints">Result Decimal Points</label>
+                    <br />
+                    <input type="number" name="resultDecimalPoints" id="resultDecimalPoints" value="{%resultDecimalPoints%}" min="0" max="5"/>
+                    <br />
+                    <label for="numTasks">Number of Tasks</label>
+                    <br />
+                    <input type="number" name="numTasks" id="numTasks" value={%numTasks%} min="1" max="100" />
+                    <br />
+                </div>
+                    <input type="submit" value="Ok" />
+            </div>
+        </form>
+    </details>
+    </div>
+
+    <div class="content">
+        <p>Solved: <span id="solved">0</span>/{%numTasks%}</p>
+        <p id="statusLastAnswer"></p>
+        <p><span id="task"></span></p>
+        <input type="text" id="answer" placeholder="Round to {%resultDecimalPoints%} decimal places" autofocus/>
+        <button type="button" id="aw_button" onclick="showCorrectAnswer()">Show correct Answer</button>
+    </div>
+
+    <script>
+        let solved = 0;
+        const numTasks = {%numTasks%};
+        const tasks = [{%tasks%}];
+        const correctAnswers = [{%correctAnswers%}];
+
+        function answer() {
+            if(solved >= numTasks){return;}
+            let answer = parseFloat(document.getElementById("answer").value);
+            if(answer == correctAnswers[solved]){
+                solved = solved + 1;
+                document.getElementById("solved").innerHTML = solved;
+                document.getElementById("statusLastAnswer").innerHTML = "&#10004;";
+                document.getElementById("statusLastAnswer").style = "color: green;";
+                if(solved >= numTasks){
+                    document.getElementById("task").innerHTML = "Finished";
+                    document.getElementById("aw_button").innerHTML = "Restart";
+                    document.getElementById("aw_button").onclick = () => {
+                        document.getElementById("form").submit();
+                    };
+                    return;
+                }
+                document.getElementById("task").innerHTML = tasks[solved];
+            } else {
+                document.getElementById("statusLastAnswer").innerHTML = "&#10007;";
+                document.getElementById("statusLastAnswer").style = "color: red;";
+            }
+            document.getElementById("answer").value = "";
+        }
+
+        function showCorrectAnswer(){
+            if(solved >= numTasks){return;}
+            document.getElementById("answer").value = correctAnswers[solved];
+        }
+
+        document.getElementById("task").innerHTML = tasks[solved];
+        document.getElementById("answer").addEventListener("keyup", (e) => {
+            if(event.key == "Enter" || event.key == " " || event.key == "Accept"
+               || event.key == "Execute"|| event.key == "Finish"){answer();}
+        });
+    </script>
+</body>
+</html> 

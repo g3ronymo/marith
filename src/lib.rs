@@ -44,7 +44,7 @@ pub struct Config {
     pub variable_num: u8,
     pub variable_range: RangeInclusive<i32>,
     /// has to be >= 1. Which of the provided operators are 
-    /// choosen for a task is random.
+    /// chosen for a task is random.
     pub operators: Vec<Operator>,
     pub variable_decimal_points: u8,
     pub result_decimal_points: u8,

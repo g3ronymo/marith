@@ -56,7 +56,7 @@ async fn main() {
 
 
     // init template
-    let err_msg = format!("Faild to open {}", &args.template_path);
+    let err_msg = format!("Failed to open {}", &args.template_path);
     let mut f = File::open(args.template_path).expect(&err_msg);
     f.read_to_string(TEMPLATE
         .lock()
@@ -65,7 +65,7 @@ async fn main() {
     ).expect("Failed to initialize template");
 
     let app = Router::new().route("/", get(handle_get));
-    // run our app with hyper, listening localy on port 3000
+    // run our app with hyper, listening locally on port 3000
     let listener = tokio::net::TcpListener::bind(socket_address)
         .await.unwrap();
     axum::serve(listener, app).await.unwrap();

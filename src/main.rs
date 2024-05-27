@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
+use tracing;
+use tracing_subscriber::{self, filter::EnvFilter};
+use tower_http::trace::TraceLayer;
+
 use axum::response::IntoResponse;
 use axum::{
     routing::get,
@@ -30,6 +34,13 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(EnvFilter::from_default_env())
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("setting default subscriber failed");
+
     let args = Args::parse();
     // get socket address
     let ip_addr = if args.ipv6 {
@@ -56,10 +67,12 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(handle_get))
-        .with_state(template);
-    // run our app with hyper, listening locally on port 3000
+        .with_state(template) 
+        .layer(TraceLayer::new_for_http());
+
     let listener = tokio::net::TcpListener::bind(socket_address)
         .await.unwrap();
+    tracing::info!("listen on {}", socket_address);
     axum::serve(listener, app).await.unwrap();
 }
 

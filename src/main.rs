@@ -1,8 +1,4 @@
-use std::fs::File;
 use std::collections::HashMap;
-use std::io::Read;
-use std::ops::DerefMut;
-use std::sync::Mutex;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use axum::response::IntoResponse;
@@ -11,12 +7,11 @@ use axum::{
     Router,
     extract::Query,
     http::StatusCode,
+    extract::State,
 };
 use clap::Parser;
 
 use marith::{Config, Operator};
-
-static TEMPLATE: Mutex<String> = Mutex::new(String::new());
 
 #[derive(Parser)]
 struct Args {
@@ -57,21 +52,18 @@ async fn main() {
 
     // init template
     let err_msg = format!("Failed to open {}", &args.template_path);
-    let mut f = File::open(args.template_path).expect(&err_msg);
-    f.read_to_string(TEMPLATE
-        .lock()
-        .expect("Failed to get lock")
-        .deref_mut()
-    ).expect("Failed to initialize template");
+    let template = std::fs::read_to_string(args.template_path).expect(&err_msg);
 
-    let app = Router::new().route("/", get(handle_get));
+    let app = Router::new()
+        .route("/", get(handle_get))
+        .with_state(template);
     // run our app with hyper, listening locally on port 3000
     let listener = tokio::net::TcpListener::bind(socket_address)
         .await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handle_get(Query(params): Query<HashMap<String, String>>) 
+async fn handle_get(State(mut template): State<String>, Query(params): Query<HashMap<String, String>>) 
     -> impl IntoResponse {
     // build config from query
     let mut config = Config::default();
@@ -132,10 +124,6 @@ async fn handle_get(Query(params): Query<HashMap<String, String>>)
     let tasks = config.generate_new_tasks();
 
     // fill template
-    let mut template = TEMPLATE
-        .lock()
-        .expect("Failed to get template lock")
-        .clone();
     template = template.replace("{%variableNum%}", 
         config.variable_num.to_string().as_str());
     template = template.replace("{%variableMinValue%}", 
@@ -180,8 +168,7 @@ async fn handle_get(Query(params): Query<HashMap<String, String>>)
     template = template.replace("{%tasks%}", &tasks_string);
     template = template.replace("{%correctAnswers%}", &correct_answers);
     let headers = [
-        ("Content-Type", "text/html; charset=utf-8"),
-        //("Content-Length", template.as_bytes().len().to_string())
+        ("Content-Type", "text/html; charset=utf-8")
     ];
     (StatusCode::OK, headers, template)
 }
